@@ -23,7 +23,14 @@ def fetch_file_list(**kwargs):
     mysql_hook = MySqlHook(mysql_conn_id='chessbi')
     
     # Выполнение SQL-запроса и получение всех записей
-    records = mysql_hook.get_records(sql="SELECT file_url FROM file_links;")
+    records = mysql_hook.get_records(sql="""
+                                     SELECT 
+                                        file_url 
+                                     FROM file_links fl
+                                        LEFT JOIN file_load_log fll on fll.id_file = fl.id
+                                        AND fll.load_status = 'load_ok'
+                                     WHERE fll.id_file IS NULL
+                                     """)
     
     # Извлечение списка файлов из записей
     file_list = [row[0] for row in records]
@@ -56,10 +63,31 @@ def load_file(file_url, load_path):
         # Сохранение файла в целевую директорию
         with open(file_path, 'wb') as f:
             f.write(response.content)
-        
+
+        log_file_load(file_url, status='load_ok')
         print(f"File saved: {file_path}")
     except Exception as e:
         print(f"Error downloading {file_url}: {e}")
+
+def log_file_load(file_url, status, mysql_conn_id='chessbi'):
+    try:
+        mysql_hook = MySqlHook(mysql_conn_id=mysql_conn_id)
+        file_id_query = "SELECT id FROM file_links WHERE file_url = %s"
+        
+        # Получение id файла
+        file_id = mysql_hook.get_first(file_id_query, parameters=(file_url,))[0]
+        
+        # Запись информации о загрузке файла в таблицу file_load_log
+        insert_query = """
+            INSERT INTO file_load_log (id_file, load_status, dt)
+            VALUES (%s, %s, NOW())
+        """
+        mysql_hook.run(insert_query, parameters=(file_id, status))
+        print(f"Log entry added for file {file_url} with status {status}")
+    
+    except Exception as e:
+        print(f"Error logging file {file_url}: {e}")
+        log_file_load(file_url, status=e)
 
 # Задача для получения списка файлов
 fetch_files_task = PythonOperator(
@@ -71,7 +99,7 @@ fetch_files_task = PythonOperator(
 
 # Задача для загрузки списка файлов
 load_files_task = PythonOperator(
-    task_id='print_files',
+    task_id='load_files',
     python_callable=load_files,
     provide_context=True,
     dag=dag,

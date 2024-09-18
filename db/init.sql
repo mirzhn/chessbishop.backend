@@ -1,5 +1,6 @@
+#step 1
 
-DROP TABLE file_links;
+DROP TABLE IF EXISTS file_links;
 CREATE TABLE file_links (
 	id int UNSIGNED AUTO_INCREMENT KEY,
 	file_url varchar(255) NOT NULL,
@@ -7,7 +8,7 @@ CREATE TABLE file_links (
 )
 ENGINE = INNODB;
 
-
+DROP TABLE IF EXISTS file_load_log;
 CREATE TABLE file_load_log (
 	id_file int UNSIGNED KEY,
 	load_status varchar(255) NOT NULL,
@@ -69,5 +70,63 @@ VALUES
 ('https://www.mark-weeks.com/chess/ratings/2000-07.zip', 'old_type');
 
 
-select * 
-FROM file_links;
+#step 2
+INSERT INTO file_links(file_url, load_type)
+VALUES
+('http://ratings.fide.com/download/jan01frl.zip', 'old_type'),
+('http://ratings.fide.com/download/jan02frl.zip', 'old_type'),
+('http://ratings.fide.com/download/jan03frl.zip', 'old_type'),
+('http://ratings.fide.com/download/jan04frl.zip', 'old_type'),
+('http://ratings.fide.com/download/jan05frl.zip', 'old_type'),
+('http://ratings.fide.com/download/jan06frl.zip', 'old_type'),
+('http://ratings.fide.com/download/jan07frl.zip', 'old_type'),
+('http://ratings.fide.com/download/jan08frl.zip', 'old_type'),
+('http://ratings.fide.com/download/jan09frl.zip', 'old_type'),
+('http://ratings.fide.com/download/jan10frl.zip', 'old_type'),
+('http://ratings.fide.com/download/jan11frl.zip', 'old_type'),
+('http://ratings.fide.com/download/jan12frl.zip', 'old_type');
+
+
+INSERT INTO file_links(file_url, load_type)
+VALUES
+-- 2013
+('http://ratings.fide.com/download/standard_jan13frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_feb13frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_mar13frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_apr13frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_may13frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_jun13frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_jul13frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_aug13frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_sep13frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_oct13frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_nov13frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_dec13frl.zip', 'old_standard'),
+-- 2014
+('http://ratings.fide.com/download/standard_jan14frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_feb14frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_mar14frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_apr14frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_may14frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_jun14frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_jul14frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_aug14frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_sep14frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_oct14frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_nov14frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_dec14frl.zip', 'old_standard'),
+-- 2015
+('http://ratings.fide.com/download/standard_jan15frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_feb15frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_mar15frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_apr15frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_may15frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_jun15frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_jul15frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_aug15frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_sep15frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_oct15frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_nov15frl.zip', 'old_standard'),
+('http://ratings.fide.com/download/standard_dec15frl.zip', 'old_standard');
+
+
