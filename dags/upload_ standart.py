@@ -16,7 +16,7 @@ default_args = {
 
 # Изменённый DAG
 dag = DAG(
-    dag_id='upload_old_type',
+    dag_id='upload_standart',
     default_args=default_args,
     schedule_interval=None,
 )
@@ -30,7 +30,7 @@ def fetch_file_list(**kwargs):
         SELECT fl.id, fl.file_url, format AS file_format 
         FROM file_links fl
             LEFT JOIN file_format ff on ff.id = fl.id_file_format                             
-        WHERE fl.id_file_format IN (1, 2, 3, 4, 5, 6)
+        WHERE fl.id_file_format IN (7, 8)                  
     """)
     
     # Создание списка кортежей (id_file, file_name, file_format)
@@ -87,7 +87,7 @@ def parse_file_by_structure(lines, file_format, id_file):
     return parsed_data
 
 # Функция для обработки одного файла
-def process_file(id_file, archive_name, file_format, archive, mysql_hook, load_path, batch_size=1000):
+def process_file(id_file, archive_name, file_format, archive, mysql_hook, load_path, batch_size=100000):
     archive_path = os.path.join(load_path, archive_name)
 
     if os.path.exists(archive_path):
@@ -114,9 +114,9 @@ def process_file(id_file, archive_name, file_format, archive, mysql_hook, load_p
                             # Если накопили достаточное количество данных
                             if len(parsed_data) >= batch_size:
                                 insert_query = """
-                                    INSERT INTO sa_old_type_2 (ID_NUMBER, NAME, TITLE, COUNTRY, RAITING, GAMES, BIRTHDAY, FLAG, id_file)
+                                    INSERT INTO sa_standart (ID_NUMBER, NAME, COUNTRY, SEX, TITLE, WTITLE, OTITLE, FOA, RAITING ,GAMES, KFACTOR, BIRTHDAY, FLAG, id_file)
                                     VALUES {}
-                                """.format(', '.join(['(%s, %s, %s, %s, %s, %s, %s, %s, %s)'] * len(parsed_data)))
+                                """.format(', '.join(['(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'] * len(parsed_data)))
 
                                 # Передаем все параметры
                                 parameters = [item for sublist in parsed_data for item in sublist]
@@ -127,9 +127,9 @@ def process_file(id_file, archive_name, file_format, archive, mysql_hook, load_p
                         # Вставка оставшихся данных, если есть
                         if parsed_data:
                             insert_query = """
-                                INSERT INTO sa_old_type_2 (ID_NUMBER, NAME, TITLE, COUNTRY, RAITING, GAMES, BIRTHDAY, FLAG,id_file)
+                                INSERT INTO sa_standart (ID_NUMBER, NAME, COUNTRY, SEX, TITLE, WTITLE, OTITLE, FOA, RAITING, GAMES, KFACTOR, BIRTHDAY, FLAG, id_file)
                                 VALUES {}
-                            """.format(', '.join(['(%s, %s, %s, %s, %s, %s, %s, %s, %s)'] * len(parsed_data)))
+                            """.format(', '.join(['(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'] * len(parsed_data)))
                             
                             parameters = [item for sublist in parsed_data for item in sublist]
                             mysql_hook.run(insert_query, parameters=parameters)
