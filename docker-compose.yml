@@ -1,0 +1,49 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "${MYSQL_PORT}:3306"
+    volumes:
+      - ${MYSQL_DATA}:/var/lib/mysql
+
+  airflow-init:
+    image: apache/airflow:2.10.3
+    container_name: airflow-init
+    command: "db init"
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "mysql+mysqldb://${MYSQL_AIRFLOW_USER}:${MYSQL_AIRFLOW_PASSWORD}@mysql:3306/${MYSQL_AIRFLOW_DATABASE}"
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    volumes:
+      - ${AIRFLOW_DAGS_FOLDER}:/opt/airflow/dags
+
+  airflow-webserver:
+    image: apache/airflow:2.10.3
+    container_name: airflow-webserver
+    command: "webserver"
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "mysql+mysqldb://${MYSQL_AIRFLOW_USER}:${MYSQL_AIRFLOW_PASSWORD}@mysql:3306/${MYSQL_AIRFLOW_DATABASE}"
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    ports:
+      - "${AIRFLOW_WEBSERVER_PORT}:8080"
+    volumes:
+      - ${AIRFLOW_DAGS_FOLDER}:/opt/airflow/dags
+
+  airflow-scheduler:
+    image: apache/airflow:2.10.3
+    container_name: airflow-scheduler
+    command: "scheduler"
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "mysql+mysqldb://${MYSQL_AIRFLOW_USER}:${MYSQL_AIRFLOW_PASSWORD}@mysql:3306/${MYSQL_AIRFLOW_DATABASE}"
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    volumes:
+      - ${AIRFLOW_DAGS_FOLDER}:/opt/airflow/dags
+
+volumes:
+  mysql_data:
+    driver: local
+  airflow_home:
+    driver: local
