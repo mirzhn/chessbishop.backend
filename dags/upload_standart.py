@@ -2,6 +2,7 @@ import os
 import zipfile
 import json
 import re
+import time
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.providers.mysql.hooks.mysql import MySqlHook
@@ -29,8 +30,13 @@ def fetch_file_list(**kwargs):
     records = mysql_hook.get_records(sql="""
         SELECT fl.id, fl.file_url, format AS file_format 
         FROM file_links fl
-            LEFT JOIN file_format ff on ff.id = fl.id_file_format                             
-        WHERE fl.id_file_format IN (7, 8)                  
+            LEFT JOIN file_format ff ON ff.id = fl.id_file_format
+            LEFT JOIN file_load_log fll ON fll.id_file = fl.id
+            AND fll.load_status = 'load_sa_ok'
+        WHERE fl.id_file_format IN (7, 8)
+          AND fll.id_file IS NULL
+          AND fl.id <> 106
+        LIMIT 1;                                                                 
     """)
     
     # Создание списка кортежей (id_file, file_name, file_format)
@@ -49,6 +55,19 @@ def decode_file_content(file, encoding):
         return content
     except UnicodeDecodeError:
         raise UnicodeDecodeError(f"Failed to decode file with encoding {encoding}")
+
+
+def log_file_load(id_file, status, mysql_conn_id='chessbi'):
+    try:
+        mysql_hook = MySqlHook(mysql_conn_id=mysql_conn_id)
+        insert_query = """
+            INSERT INTO file_load_log (id_file, load_status, dt)
+            VALUES (%s, %s, NOW())
+        """
+        mysql_hook.run(insert_query, parameters=(id_file, status))
+        print(f"Log entry added for file ID {id_file} with status {status}")
+    except Exception as e:
+        print(f"Error logging file ID {id_file}: {e}")
 
 # Функция для парсинга файла по структуре
 def extract_field(line, position, next_position=None):
@@ -107,6 +126,8 @@ def process_file(id_file, archive_name, file_format, archive, mysql_hook, load_p
                             lines = [line for line in lines if line]
 
                             if not lines:
+                                log_file_load(id_file, status='load_sa_ok')
+                                time.sleep(10) 
                                 break
 
                             parsed_data.extend(parse_file_by_structure(lines, file_format, id_file))
@@ -121,8 +142,9 @@ def process_file(id_file, archive_name, file_format, archive, mysql_hook, load_p
                                 # Передаем все параметры
                                 parameters = [item for sublist in parsed_data for item in sublist]
                                 mysql_hook.run(insert_query, parameters=parameters)
-                                print(f"Inserting batch of {len(parsed_data)} rows")
+                                #print(f"Inserting batch of {len(parsed_data)} rows")
                                 parsed_data = []
+                                time.sleep(1)
 
                         # Вставка оставшихся данных, если есть
                         if parsed_data:
@@ -133,7 +155,7 @@ def process_file(id_file, archive_name, file_format, archive, mysql_hook, load_p
                             
                             parameters = [item for sublist in parsed_data for item in sublist]
                             mysql_hook.run(insert_query, parameters=parameters)
-                            print(f"Inserting final batch of {len(parsed_data)} rows")
+                            #print(f"Inserting final batch of {len(parsed_data)} rows")
 
                     except (UnicodeDecodeError, ValueError) as e:
                         print(f"Error processing file {file_name}: {e}")

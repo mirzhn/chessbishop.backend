@@ -31,4 +31,19 @@ docker exec -it airflow-webserver airflow connections add 'chessbi' \
     --conn-login ${MYSQL_CHESSBI_USER} \
     --conn-password ${MYSQL_CHESSBI_PASSWORD}
 
+echo "Setting up Airflow connection for load path..."
+docker exec -it airflow-webserver airflow connections add 'load_path' \
+    --conn-type 'fs' \
+    --conn-host 'localhost' \
+    --conn-extra "{\"path\": \"${LOAD_LOCAL_PATH}\"}"
+
+echo "Creating Airflow admin user..."
+docker exec -it airflow-webserver airflow users create \
+    --username admin \
+    --firstname Admin \
+    --lastname User \
+    --role Admin \
+    --email admin@example.com \
+    --password ${AIRFLOW_ADMIN_PASSWORD}
+
 echo "Project setup completed successfully!"

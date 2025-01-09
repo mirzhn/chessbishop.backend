@@ -25,12 +25,15 @@ dag = DAG(
 def fetch_file_list(**kwargs):
     mysql_hook = MySqlHook(mysql_conn_id='chessbi')
     
-    # Выполнение изменённого запроса для получения конкретного URL файла и его формата
+    # Выполнение SQL-запроса для получения только тех файлов, которые еще не были успешно загружены
     records = mysql_hook.get_records(sql="""
         SELECT fl.id, fl.file_url, format AS file_format 
         FROM file_links fl
-            LEFT JOIN file_format ff on ff.id = fl.id_file_format                             
+            JOIN file_format ff ON ff.id = fl.id_file_format
+            LEFT JOIN file_load_log fll ON fll.id_file = fl.id
+            AND fll.load_status = 'load_sa_ok'
         WHERE fl.id_file_format IN (1, 2, 3, 4, 5, 6)
+          AND fll.id_file IS NULL
     """)
     
     # Создание списка кортежей (id_file, file_name, file_format)
@@ -38,6 +41,20 @@ def fetch_file_list(**kwargs):
     
     # Сохранение списка файлов и их id в XCom
     kwargs['ti'].xcom_push(key='file_list', value=file_list)
+
+def log_file_load(id_file, status, mysql_conn_id='chessbi'):
+    try:
+        mysql_hook = MySqlHook(mysql_conn_id=mysql_conn_id)
+        insert_query = """
+            INSERT INTO file_load_log (id_file, load_status, dt)
+            VALUES (%s, %s, NOW())
+        """
+        print(f"Running query: {insert_query} with parameters: {id_file}, {status}")
+        mysql_hook.run(insert_query, parameters=(id_file, status))
+        print(f"Log entry added for file ID {id_file} with status {status}")
+    except Exception as e:
+        print(f"Error logging file ID {id_file}: {e}")
+
 
 # Функция для декодирования файла с учётом кодировки
 def decode_file_content(file, encoding):
@@ -107,6 +124,7 @@ def process_file(id_file, archive_name, file_format, archive, mysql_hook, load_p
                             lines = [line for line in lines if line]
 
                             if not lines:
+                                log_file_load(id_file, status='load_sa_ok')
                                 break
 
                             parsed_data.extend(parse_file_by_structure(lines, file_format, id_file))
