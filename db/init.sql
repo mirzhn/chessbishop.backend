@@ -1,4 +1,18 @@
 
+-- Create chessbi schema
+CREATE DATABASE IF NOT EXISTS ${MYSQL_CHESSBI_DATABASE};
+CREATE USER IF NOT EXISTS '${MYSQL_CHESSBI_USER}'@'%' IDENTIFIED BY '${MYSQL_CHESSBI_PASSWORD}';
+GRANT ALL PRIVILEGES ON ${MYSQL_CHESSBI_DATABASE}.* TO '${MYSQL_CHESSBI_USER}'@'%';
+
+-- Create airflow schema
+CREATE DATABASE IF NOT EXISTS ${MYSQL_AIRFLOW_DATABASE};
+CREATE USER IF NOT EXISTS '${MYSQL_AIRFLOW_USER}'@'%' IDENTIFIED BY '${MYSQL_AIRFLOW_PASSWORD}';
+GRANT ALL PRIVILEGES ON ${MYSQL_AIRFLOW_DATABASE}.* TO '${MYSQL_AIRFLOW_USER}'@'%';
+
+FLUSH PRIVILEGES;
+
+USE ${MYSQL_CHESSBI_DATABASE};
+
 DROP TABLE IF EXISTS file_format;
 CREATE TABLE file_format (
 	id int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -30,6 +44,8 @@ CREATE TABLE file_load_log (
 	id_file int(10) UNSIGNED NOT NULL,
 	load_status varchar(255) NOT NULL,
 	dt datetime DEFAULT CURRENT_TIMESTAMP,
+	INDEX IX_ID_FILE (id_file), 
+	INDEX IX_load_status (load_status, id_file)
 	PRIMARY KEY (id_file)
 )
 ENGINE = INNODB,
@@ -300,5 +316,9 @@ INSERT INTO file_links (id, file_url, load_type, reprot_dt, id_file_format) VALU
 (191, 'http://ratings.fide.com/download/standard_jun24frl.zip', 'standart', '2024-06-01', 8),
 (192, 'http://ratings.fide.com/download/standard_jul24frl.zip', 'standart', '2024-07-01', 8),
 (193, 'http://ratings.fide.com/download/standard_aug24frl.zip', 'standart', '2024-08-01', 8),
-(194, 'http://ratings.fide.com/download/standard_sep24frl.zip', 'standart', '2024-09-01', 8);
+(194, 'http://ratings.fide.com/download/standard_sep24frl.zip', 'standart', '2024-09-01', 8),
+(195, 'http://ratings.fide.com/download/standard_oct24frl.zip', 'standart', '2024-10-01', 8),
+(196, 'http://ratings.fide.com/download/standard_nov24frl.zip', 'standart', '2024-11-01', 8),
+(197, 'http://ratings.fide.com/download/standard_dec24frl.zip', 'standart', '2024-12-01', 8),
+(198, 'http://ratings.fide.com/download/standard_jan25frl.zip', 'standart', '2025-01-01', 8);
 
