@@ -46,6 +46,7 @@ CREATE TABLE file_load_log (
 	dt datetime DEFAULT CURRENT_TIMESTAMP,
 	INDEX IX_ID_FILE (id_file), 
 	INDEX IX_load_status (load_status, id_file)
+	PRIMARY KEY (id_file)
 )
 ENGINE = INNODB,
 AVG_ROW_LENGTH = 84,
